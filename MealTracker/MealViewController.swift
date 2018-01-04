@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  MealViewController.swift
 //  MealTracker
 //
 //  Created by KaranN on 12/21/17.
@@ -7,20 +7,31 @@
 //
 
 import UIKit
+import os.log
 
-class ViewController: UIViewController, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    
     
     //MARK: Properties
     @IBOutlet weak var nameTextField: UITextField!
     @IBOutlet weak var mealNameLabel: UILabel!
     @IBOutlet weak var photoImageView: UIImageView!
+    //@IBOutlet weak var ratingControl: RatingControl!
+    @IBOutlet weak var saveButton: UIBarButtonItem!
     @IBOutlet weak var ratingControl: RatingControl!
+    
+    
+    // passed by 'MealTableViewController' in 'prepare(for: sender:)' or constructed as part of a new meal
+    var meal: Meal?
+    
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         // Handle the text field’s user input through delegate callbacks.
         nameTextField.delegate = self
+        updateSaveButtonState()
     }
     
     //MARK: UITextFieldDelegate
@@ -31,8 +42,15 @@ class ViewController: UIViewController, UITextFieldDelegate, UIImagePickerContro
         return true
     }
     
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        //Disable the save button while editing
+        saveButton.isEnabled = false
+    }
+    
     func textFieldDidEndEditing(_ textField: UITextField) {
-        mealNameLabel.text = textField.text
+        updateSaveButtonState()
+        navigationItem.title = textField.text
+        
     }
     
     //MARK: UIImagePickerControllerDelegate
@@ -72,6 +90,41 @@ class ViewController: UIViewController, UITextFieldDelegate, UIImagePickerContro
         present(imagePickerController, animated: true, completion: nil)
     }
     
+    
+    //Mark: Navigation
+    
+    @IBAction func cancel(_ sender: UIBarButtonItem) {
+        dismiss(animated: true, completion: nil)
+    }
+    
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        
+        super.prepare(for: segue, sender: sender)
+        
+        guard let button = sender as? UIBarButtonItem, button === saveButton else {
+            
+            os_log("The save button was not pressed, cancelling", log: OSLog.default, type: .debug)
+            return
+        }
+        
+        let name = nameTextField.text ?? ""
+        let photo = photoImageView.image
+        let rating = ratingControl.rating
+        
+        meal = Meal(name: name, photo: photo, rating: rating)
+        
+        
+    }
+    
+    // Pvt methods
+    
+    private func updateSaveButtonState() {
+        // Disable the save button if the text field is empty
+        let text = nameTextField.text ?? ""
+        //saveButton.isEnabled = text.isEmpty
+        saveButton.isEnabled = !text.isEmpty
+    }
 
 }
 
