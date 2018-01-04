@@ -7,10 +7,17 @@
 //
 
 import UIKit
+import os.log
 
-class Meal {
+class Meal: NSObject, NSCoding {
+
     
     //Mark: Props
+    struct PropKey {
+        static let name = "name"
+        static let rating = "rating"
+        static let photo = "photo"
+    }
     var name: String
     var rating: Int
     var photo: UIImage?
@@ -35,4 +42,41 @@ class Meal {
         self.photo = photo
         self.rating = rating
     }
+    
+    // Mark: NSCoding
+    
+    func encode(with aCoder: NSCoder) {
+        aCoder.encode(name, forKey: PropKey.name)
+        aCoder.encode(photo, forKey: PropKey.photo)
+        aCoder.encode(rating, forKey: PropKey.rating)
+    }
+    
+    required convenience init?(coder aDecoder: NSCoder) {
+        
+        // The name is required. If we cannot decode a name string, the initializer should fail.
+        guard let name = aDecoder.decodeObject(forKey: PropKey.name) as? String else {
+            os_log("Unable to decode the name for a Meal object.", log: OSLog.default, type: .debug)
+            return nil
+        }
+        
+        // Because photo is an optional property of Meal, just use conditional cast.
+        let photo = aDecoder.decodeObject(forKey: PropKey.photo) as? UIImage
+        
+        let rating = aDecoder.decodeInteger(forKey: PropKey.rating)
+        
+        // Must call designated initializer.
+        self.init(name: name, photo: photo, rating: rating)
+        
+    }
+    
+    // Mark: Archiving paths
+    
+    //static let DocsDir = FileManager().urls(for: .documentDirectory, in: .userDomainMask).first!
+    //static let ArchiveURL = DocsDir.appendPathComponent("meals")
+    
+    static let DocumentsDirectory = FileManager().urls(for: .documentDirectory, in: .userDomainMask).first!
+    static let ArchiveURL = DocumentsDirectory.appendingPathComponent("meals")
+    
+    
+    
 }
